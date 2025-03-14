@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +28,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
-                .csrf(csrf -> csrf.disable())
 
-                // Ativar o CORS e usar a configuração personalizada
+
+
+        return http
+
+
+
+                .csrf(AbstractHttpConfigurer::disable)
+
+
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -41,6 +48,35 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
+    @Bean
+    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+
+
+        config.setAllowedOrigins(List.of("http://localhost:3000","http://192.168.25.36:3000/"));
+
+
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+
+        config.setAllowCredentials(true);
+
+
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+
+    @Bean
+    public CorsFilter corsFilter() {
+        return new CorsFilter(corsConfigurationSource());
+    }
+
 
     @Bean
     public JwtAuthFilter jwtAuthenticationFilter() {
@@ -57,32 +93,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // 🔥 SOLUÇÃO: Criar o método CORS corretamente
-    @Bean
-    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
 
-        // Permitir requisições do frontend em localhost:3000
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
 
-        // Métodos permitidos
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Permitir cabeçalhos personalizados, incluindo Authorization para JWT
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-
-        // Permitir credenciais (JWT, cookies, etc.)
-        config.setAllowCredentials(true);
-
-        // Aplicar a configuração para todas as rotas
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
-
-    // 🔥 SOLUÇÃO: Criar um filtro de CORS baseado na configuração
-    @Bean
-    public CorsFilter corsFilter() {
-        return new CorsFilter(corsConfigurationSource());
-    }
 }

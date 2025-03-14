@@ -33,7 +33,7 @@ public class RegistrationController {
                     .body(new MessageResponse("Error: Username is already taken!"));
         }
 
-        // Create new user
+
         User user = new User();
         user.setUsername(signupRequest.getUsername());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
